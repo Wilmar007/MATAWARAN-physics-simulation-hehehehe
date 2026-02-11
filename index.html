@@ -1149,9 +1149,18 @@ button,
         };
 
         // Global lock helpers — single authority: window.serverLocks
-        function isUnlocked(topic){
-          if (!window.serverLocks) return false;
-          return window.serverLocks[topic] === true;
+        function isUnlocked(topic) {
+          if (!topic) return true;
+
+          const normalized = (typeof normalizeTopic === 'function') ? normalizeTopic(topic) : (window.normalizeTopic ? window.normalizeTopic(topic) : (String(topic||'').toLowerCase().replace(/[^a-z]/g,'')));
+
+          if (['home','ohms','practical'].includes(normalized)) {
+            return true;
+          }
+
+          if (!window.serverLocks) return true;
+
+          return window.serverLocks[normalized] === true;
         }
         window.isUnlocked = isUnlocked;
         window.getLocks = function(){ return window.serverLocks || {}; };
