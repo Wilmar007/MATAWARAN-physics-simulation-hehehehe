@@ -4096,6 +4096,37 @@ window.addEventListener('load', () => {
 
 })();
 </script>
+<script>
+(function(){
+
+  function applyLocks() {
+    if (!window.serverLocks) return;
+
+    document.querySelectorAll("[data-topic]").forEach(el => {
+      const topic = el.getAttribute("data-topic");
+
+      if (window.serverLocks[topic] === true) {
+        el.style.pointerEvents = "auto";
+        el.style.opacity = "1";
+      } else {
+        el.style.pointerEvents = "none";
+        el.style.opacity = "0.4";
+      }
+    });
+  }
+
+  function waitForLocks(){
+    if (window.serverLocks) {
+      applyLocks();
+    } else {
+      setTimeout(waitForLocks, 200);
+    }
+  }
+
+  waitForLocks();
+
+})();
+</script>
  </body>
 </html>
 
