@@ -4035,21 +4035,29 @@ window.addEventListener('load', () => {
  </script>
 
 <script>
-/* FINAL SERVER LOCK ENFORCER – DO NOT DUPLICATE */
-(function(){
-  if (typeof fetchLocksFromServer !== 'function') return;
+window.addEventListener("DOMContentLoaded", async () => {
+  const name = localStorage.getItem("studentName");
+  const section = localStorage.getItem("studentSection");
 
-  const name = localStorage.getItem('studentName') || '';
-  const section = localStorage.getItem('studentSection') || '';
-  if (!name || !section) return;
+  if (!name || !section) {
+    console.warn("No student info found.");
+    return;
+  }
 
-  fetchLocksFromServer(name, section)
-    .then(() => {
-      try{ if (typeof updateStudentLocks === 'function') updateStudentLocks(); }catch(e){}
-      try{ if (typeof applyEffectiveLocks === 'function') applyEffectiveLocks(); }catch(e){}
-    })
-    .catch(()=>{});
-})();
+  try {
+    await fetchLocksFromServer(name, section);
+    console.log("Server locks loaded:", window.serverLocks);
+
+    if (typeof render === "function") {
+      render();
+    }
+    if (typeof updateStudentLocks === "function") {
+      updateStudentLocks();
+    }
+  } catch (e) {
+    console.warn("Failed to fetch server locks", e);
+  }
+});
 </script>
 
  </body>
