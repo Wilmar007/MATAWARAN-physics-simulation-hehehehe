@@ -902,7 +902,8 @@ button,
           const rawLocks = localStorage.getItem(key) || '{}';
           const locks = JSON.parse(rawLocks || '{}');
           locks[topic] = true;
-          localStorage.setItem(key, JSON.stringify(locks));
+          // Disabled: server is the only lock authority
+          // localStorage.setItem(key, JSON.stringify(locks));
         }catch(e){}
 
         // Mark passed map for replay-safe unlocks
@@ -1248,7 +1249,10 @@ button,
     <script>
       (function(){
         const keys = ['home','ohms','practical','series','parallel','power_energy','charge','magnetism'];
-        function readLocks(){ try{ return (window.getLocks ? window.getLocks() : JSON.parse(localStorage.getItem('electricityLabLocks')||'{}')); }catch(e){ return {}; } }
+        function readLocks(){
+          // Always return server locks
+          return window.serverLocks || {};
+        }
         function render(){
           const container = document.getElementById('studentProgressList'); if(!container) return;
           const locks = readLocks();
