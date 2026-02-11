@@ -28,465 +28,73 @@ ALL SIMULATORS ARE IN /simulators FOLDER ONLY.
     }
 
     body {
-      -webkit-text-size-adjust: 100%;
-      text-size-adjust: 100%;
-      font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #0a0e27 0%, #1a0a3e 50%, #0a0e27 100%);
-      color: #e0e0ff;
-      overflow-x: hidden;
-      letter-spacing: 0.3px;
-    }
+      <script>
+      /* FINAL CLEAN SERVER LOCK ENGINE */
 
-    .main-wrapper {
-      width: 100%;
-      height: 100%;
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
+      (function(){
 
-    /* Constrain main layout containers to avoid 100vw scaling issues on iOS Safari */
-    .nav-menu,
-    .main-wrapper,
-    .content,
-    .home-grid,
-    .appliance-grid,
-    .lights-container {
-      width: 100%;
-      max-width: 1400px;
-      margin: 0 auto;
-      box-sizing: border-box;
-    }
+        const SERVER_URL = "https://script.google.com/macros/s/AKfycbzCff8pXngkPykh6RN6sgkNqumXNyJTjlQdTe2KVoPlmBsfzhd19-ZiTyXVrhNPGkHJ/exec";
 
-    @keyframes sparkle {
-      0%, 100% { opacity: 0; transform: scale(0); }
-      50% { opacity: 1; transform: scale(1); }
-    }
+        const studentName = localStorage.getItem("studentName");
+        const studentSection = localStorage.getItem("studentSection");
 
-    .spark {
-      position: fixed;
-      width: 3px;
-      height: 3px;
-      background: #FFD700;
-      border-radius: 50%;
-      pointer-events: none;
-      animation: sparkle 2s infinite;
-      box-shadow: 0 0 10px #FFD700;
-    }
+        if (!studentName || !studentSection) {
+          console.log("No student info found.");
+          return;
+        }
 
-    .header {
-      background: linear-gradient(135deg, #1f0a4d 0%, #3d1a7f 50%, #2d0f5f 100%);
-      padding: 3rem 2rem;
-      text-align: center;
-      border-bottom: 3px solid #00d4ff;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0, 212, 255, 0.2);
-    }
+        fetch(`${SERVER_URL}?name=${encodeURIComponent(studentName)}&section=${encodeURIComponent(studentSection)}`)
+          .then(res => res.json())
+          .then(data => {
 
-    .header::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);
-      animation: electric-sweep 4s infinite;
-    }
+            console.log("SERVER LOCKS:", data);
+            window.serverLocks = data;
 
-    @keyframes electric-sweep {
-      0% { left: -100%; }
-      100% { left: 200%; }
-    }
+            applyLocks();
 
-    .header h1 {
-      font-size: 3rem;
-      margin-bottom: 0.5rem;
-      text-shadow: 0 0 30px #00d4ff, 0 0 60px #0088ff;
-      position: relative;
-      background: linear-gradient(135deg, #00d4ff 0%, #00ffff 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
+          })
+          .catch(err => console.error("Fetch error:", err));
 
-    .header p {
-      font-size: 1.2rem;
-      color: #00ffff;
-      position: relative;
-      font-weight: 300;
-      letter-spacing: 1px;
-    }
 
-    .nav-menu {
-      background: rgba(15, 10, 45, 0.8);
-      backdrop-filter: blur(10px);
-      padding: 1.2rem;
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-      border-bottom: 2px solid #00d4ff;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    }
+        function applyLocks() {
 
-    .nav-btn {
-      background: linear-gradient(135deg, #00d4ff 0%, #00ffff 100%);
-      color: #0a0e27;
-      border: none;
-      padding: 0.9rem 1.8rem;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
-      font-size: 1rem;
-    }
+          document.querySelectorAll("[data-topic]").forEach(el => {
 
-    .nav-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(0, 212, 255, 0.5);
-    }
+            const topic = el.getAttribute("data-topic");
 
-    .nav-btn.active {
-      background: linear-gradient(135deg, #00ffff 0%, #00d4ff 100%);
-      box-shadow: 0 0 30px rgba(0, 212, 255, 0.8);
-      transform: scale(1.05);
-    }
+            // Always unlocked topics
+            if (["home", "ohms", "practical"].includes(topic)) {
+              unlock(el);
+              return;
+            }
 
-    .content {
-      padding: 2rem;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
+            // If server says unlocked
+            if (window.serverLocks && window.serverLocks[topic] === true) {
+              unlock(el);
+            } else {
+              lock(el);
+            }
 
-    .section {
-      display: none;
-      animation: fadeIn 0.5s;
-    }
+          });
 
-    .section.active {
-      display: block;
-    }
+        }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
 
-    .card {
-      background: rgba(30, 15, 60, 0.7);
-      border: 2px solid #00d4ff;
-      border-radius: 15px;
-      padding: 2.5rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 8px 32px rgba(0, 212, 255, 0.15);
-      position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-    }
+        function lock(el) {
+          el.style.pointerEvents = "none";
+          el.style.opacity = "0.4";
+        }
 
-    .card::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(0, 212, 255, 0.1) 0%, transparent 70%);
-      animation: rotate 15s linear infinite;
-    }
+        function unlock(el) {
+          el.style.pointerEvents = "auto";
+          el.style.opacity = "1";
+        }
 
-    /* Ensure embedded iframes inside sections/cards are fully interactive
-       - enable pointer events on iframes
-       - place iframes above decorative pseudo-elements that might overlap them
-       - do not alter layout or colors */
-    .section iframe,
-    .card iframe {
-      pointer-events: auto;
-      position: relative;
-      z-index: 5;
-      -webkit-user-select: auto;
-      user-select: auto;
-    }
+      })();
+      </script>
 
-    /* keep decorative pseudo-element behind content */
-    .card::before {
-      z-index: 0;
-    }
-
-    @keyframes rotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    .card-content {
-      position: relative;
-      z-index: 1;
-    }
-
-    .card h2 {
-      color: #00d4ff;
-      margin-bottom: 1.5rem;
-      font-size: 2rem;
-      text-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
-    }
-
-    .card h3 {
-      color: #00ffff;
-      margin-top: 1.5rem;
-      margin-bottom: 1rem;
-      font-size: 1.4rem;
-    }
-
-    .calculator {
-      background: rgba(0, 0, 0, 0.4);
-      padding: 1.5rem;
-      border-radius: 10px;
-      border: 2px solid #B8860B;
-      margin: 1rem 0;
-    }
-
-    .input-group {
-      margin-bottom: 1rem;
-    }
-
-    .input-group label {
-      display: block;
-      margin-bottom: 0.5rem;
-      color: #00d4ff;
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
-
-    .input-group input, .input-group select {
-      width: 100%;
-      padding: 0.9rem;
-      background: rgba(10, 14, 39, 0.8);
-      border: 2px solid #00d4ff;
-      border-radius: 8px;
-      color: #00ffff;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-    }
-
-    .input-group input:focus, .input-group select:focus {
-      outline: none;
-      border-color: #00ffff;
-      box-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
-      background: rgba(20, 20, 60, 0.9);
-    }
-
-    .btn {
-      background: linear-gradient(135deg, #00d4ff 0%, #00ffff 100%);
-      color: #0a0e27;
-      border: none;
-      padding: 1rem 2rem;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      margin: 0.5rem;
-      box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 212, 255, 0.5);
-    }
-
-    .btn:active {
-      transform: translateY(0);
-    }
-
-    .btn-secondary {
-      background: linear-gradient(135deg, #1a0a3e 0%, #2d0f5f 100%);
-      color: #00ffff;
-      border: 2px solid #00d4ff;
-    }
-
-    .toggle-btn {
-      background: linear-gradient(135deg, #00d4ff 0%, #00ffff 100%);
-      color: #0a0e27;
-      border: none;
-      padding: 0.7rem 1.4rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      margin: 0.5rem 0;
-      transition: all 0.3s ease;
-    }
-
-    .toggle-btn:hover {
-      box-shadow: 0 0 20px rgba(0, 212, 255, 0.7);
-      transform: translateY(-1px);
-    }
-
-    .solution {
-      background: rgba(0, 212, 255, 0.1);
-      border: 2px solid #00d4ff;
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin-top: 1rem;
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.5s ease;
-    }
-
-    .solution.show {
-      max-height: 1000px;
-    }
-
-    .solution h4 {
-      color: #00d4ff;
-      margin-bottom: 1rem;
-    }
-
-    .solution p {
-      color: #e0e0ff;
-      line-height: 1.8;
-      margin: 0.5rem 0;
-    }
-
-    .simulator {
-      background: rgba(10, 14, 39, 0.8);
-      border: 3px solid #00d4ff;
-      border-radius: 15px;
-      padding: 2rem;
-      margin: 1rem 0;
-      position: relative;
-      backdrop-filter: blur(10px);
-    }
-
-    .circuit-display {
-      background: rgba(20, 15, 50, 0.8);
-      border: 2px solid #00d4ff;
-      border-radius: 10px;
-      padding: 2rem;
-      text-align: center;
-      margin: 1rem 0;
-      min-height: 200px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .electron {
-      width: 10px;
-      height: 10px;
-      background: #00d4ff;
-      border-radius: 50%;
-      position: absolute;
-      box-shadow: 0 0 15px #00d4ff, 0 0 25px #00ffff;
-      animation: flow 3s linear infinite;
-    }
-
-    @keyframes flow {
-      0% { left: 5%; top: 30%; }
-      15% { left: 35%; top: 30%; }
-      25% { left: 35%; top: 50%; }
-      35% { left: 50%; top: 50%; }
-      50% { left: 65%; top: 50%; }
-      60% { left: 65%; top: 70%; }
-      75% { left: 35%; top: 70%; }
-      90% { left: 5%; top: 70%; }
-      100% { left: 5%; top: 30%; }
-    }
-
-    .parallel-electron {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      position: absolute;
-      box-shadow: 0 0 15px currentColor, 0 0 30px currentColor;
-    }
-
-    .parallel-electron-1 {
-      animation: parallelFlow1 4s linear infinite;
-    }
-
-    .parallel-electron-2 {
-      animation: parallelFlow2 4s linear infinite;
-    }
-
-    .parallel-electron-3 {
-      animation: parallelFlow3 4s linear infinite;
-    }
-
-    @keyframes parallelFlow1 {
-      0% { left: 10%; top: 50px; }
-      15% { left: 30%; top: 50px; }
-      30% { left: 30%; top: 120px; }
-      40% { left: 30%; top: 160px; }
-      55% { left: 30%; top: 350px; }
-      70% { left: 10%; top: 350px; }
-      85% { left: 10%; top: 200px; }
-      100% { left: 10%; top: 50px; }
-    }
-
-    @keyframes parallelFlow2 {
-      0% { left: 10%; top: 50px; }
-      15% { left: 50%; top: 50px; }
-      30% { left: 50%; top: 120px; }
-      40% { left: 50%; top: 160px; }
-      55% { left: 50%; top: 350px; }
-      70% { left: 10%; top: 350px; }
-      85% { left: 10%; top: 200px; }
-      100% { left: 10%; top: 50px; }
-    }
-
-    @keyframes parallelFlow3 {
-      0% { left: 10%; top: 50px; }
-      15% { left: 70%; top: 50px; }
-      30% { left: 70%; top: 120px; }
-      40% { left: 70%; top: 160px; }
-      55% { left: 70%; top: 350px; }
-      70% { left: 10%; top: 350px; }
-      85% { left: 10%; top: 200px; }
-      100% { left: 10%; top: 50px; }
-    }
-
-    .lights-container {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 2rem;
-      padding: 2rem;
-      background: rgba(0, 0, 0, 0.4);
-      border-radius: 10px;
-      margin: 1rem 0;
-    }
-
-    .bulb {
-      cursor: pointer;
-      transition: all 0.3s;
-      text-align: center;
-    }
-
-    .bulb-icon {
-      font-size: 6rem;
-      filter: drop-shadow(0 0 15px currentColor) drop-shadow(0 0 30px currentColor);
-      transition: all 0.3s;
-    }
-
-    .bulb.on .bulb-icon {
-      animation: christmasGlow 1.2s ease-in-out infinite;
-    }
-
-    .bulb.off .bulb-icon {
-      opacity: 0.2;
-      filter: grayscale(100%) brightness(0.3);
-      animation: none;
-    }
-
-    @keyframes christmasGlow {
-      0%, 100% { 
-        filter: drop-shadow(0 0 10px currentColor) drop-shadow(0 0 20px currentColor);
-        transform: scale(1);
-      }
+      </body>
+      </html>
       50% { 
         filter: drop-shadow(0 0 25px currentColor) drop-shadow(0 0 45px currentColor) drop-shadow(0 0 60px currentColor);
         transform: scale(1.05);
@@ -875,46 +483,7 @@ button,
   <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
  </head>
  <body>
-  <script>
-    // Early QUIZ_PASSED listener (registered before iframes load)
-    function normalizeTopicFromQuiz(raw){
-      if(!raw) return null;
-      const s = String(raw).toLowerCase();
-      if(s.includes('power') || s.includes('energy')) return 'power_energy';
-      if(s.includes('series')) return 'series';
-      if(s.includes('parallel')) return 'parallel';
-      if(s.includes('ohm')) return 'ohms';
-      if(s.includes('charge')) return 'charge';
-      if(s.includes('magnet')) return 'magnetism';
-      return null;
-    }
-
-    window.addEventListener('message', function earlyQuizPassedListener(ev){
-      try{
-        if(!ev || !ev.data || ev.data.type !== 'QUIZ_PASSED') return;
-        const raw = ev.data.topic || ev.data.quiz || ev.data.section || '';
-        const topic = normalizeTopicFromQuiz(raw);
-        if(!topic) return;
-
-        // Persist unlock in-memory to serverLocks only (do not write localStorage)
-        try{
-          window.serverLocks = window.serverLocks || {};
-          window.serverLocks[topic] = true;
-        }catch(e){}
-
-        // Mark passed map for replay-safe unlocks
-        try{
-          const PKEY = 'EL_QUIZ_PASSED';
-          const passed = JSON.parse(localStorage.getItem(PKEY) || '{}');
-          passed[topic] = true;
-          localStorage.setItem(PKEY, JSON.stringify(passed));
-        }catch(e){}
-
-        // Try to update UI immediately if available
-        try{ if(typeof updateStudentLocks === 'function') updateStudentLocks(); }catch(e){}
-      }catch(e){}
-    }, false);
-  </script>
+  
   <!-- Welcome / Login Gate (top-of-body, self-contained) -->
   <div id="welcome-gate">
     <style>
@@ -1131,40 +700,7 @@ button,
           }catch(e){ console.error(e); }
         }
 
-        window.fetchLocksFromServer = async function(name, section) {
-          const base = "https://script.google.com/macros/s/AKfycbzCff8pXngkPykh6RN6sgkNqumXNyJTjlQdTe2KVoPlmBsfzhd19-ZiTyXVrhNPGkHJ/exec";
-
-          const res = await fetch(`${base}?name=${encodeURIComponent(name)}&section=${encodeURIComponent(section)}`);
-          const data = await res.json();
-
-          window.serverLocks = {
-            series: !!data.series,
-            parallel: !!data.parallel,
-            power_energy: !!data.power_energy,
-            charge: !!data.charge,
-            magnetism: !!data.magnetism
-          };
-
-          console.log("SERVER LOCKS APPLIED:", window.serverLocks);
-        };
-
-        // Global lock helpers — single authority: window.serverLocks
-        function isUnlocked(topic) {
-          if (!topic) return true;
-
-          const normalized = (typeof normalizeTopic === 'function') ? normalizeTopic(topic) : (window.normalizeTopic ? window.normalizeTopic(topic) : (String(topic||'').toLowerCase().replace(/[^a-z]/g,'')));
-
-          if (['home','ohms','practical'].includes(normalized)) {
-            return true;
-          }
-
-          if (!window.serverLocks) return true;
-
-          return window.serverLocks[normalized] === true;
-        }
-        window.isUnlocked = isUnlocked;
-        window.getLocks = function(){ return window.serverLocks || {}; };
-        window.setLock = function(topic, unlocked){ window.serverLocks = window.serverLocks || {}; window.serverLocks[topic] = !!unlocked; };
+        
 
         function saveAndEnter(role){
           try{
@@ -2487,7 +2023,7 @@ function showSection(sectionId) {
 
   // Prevent navigation when teacher lock or student unlock condition fails
   try{
-    if(!(isUnlocked(sectionId) && !isTeacherLocked(sectionId)) && localStorage.getItem('role') !== 'teacher'){
+    if(!(window.serverLocks ? window.serverLocks[sectionId] === true : true) && localStorage.getItem('role') !== 'teacher'){
       try{ alert('🔒 This topic is locked.'); }catch(e){}
       return;
     }
@@ -3568,15 +3104,15 @@ window.updateHouseholdHours = updateHouseholdHours;
             {label:'Charge', key:'electricCharge'},
             {label:'Magnetism', key:'magnetism'}
           ];
-          var attemptsMap = window.getAttempts ? window.getAttempts() : JSON.parse(localStorage.getItem('EL_QUIZ_ATTEMPTS')||'{}');
-          var passedMap = window.getPassed ? window.getPassed() : JSON.parse(localStorage.getItem('EL_QUIZ_PASSED')||'{}');
+          var attemptsMap = window.getAttempts ? window.getAttempts() : {};
+          var passedMap = window.getPassed ? window.getPassed() : {};
           function attemptsKeyFromInternal(key){ if(key==='ohms-law') return 'ohms'; if(key==='power') return 'energy'; if(key==='electricCharge') return 'charge'; return key; }
           rows.forEach(function(r){
             var status = '❌ Locked';
             try{
-              if(window.isTeacherLocked && window.isTeacherLocked(r.key)) status = '🔒 Locked by Teacher';
-              else if(window.isUnlocked && window.isUnlocked(r.key)) status = '🔓 Unlocked';
-            }catch(e){}
+                if(window.serverLocks && window.serverLocks[r.key] === false) status = '🔒 Locked by Teacher';
+                else if(window.serverLocks ? window.serverLocks[r.key] === true : true) status = '🔓 Unlocked';
+              }catch(e){}
             var aKey = attemptsKeyFromInternal(r.key);
             var attempts = attemptsMap[aKey] || 0;
             var remaining = passedMap[aKey] ? 0 : Math.max(0, 3 - attempts);
@@ -3618,167 +3154,7 @@ window.updateHouseholdHours = updateHouseholdHours;
   });
   // other JS above (quiz, buttons, etc.)
 
-  // 🔒 Lesson lock system
-  (function(){
-    const topicsOrdered = ['ohms-law','series','parallel','power_energy','electricCharge','magnetism'];
-    const STORAGE_KEY = 'unlockState';
-
-    // Delegate lock helpers to unified engine (defined later)
-    const KEY_STUDENT_PROGRESS = 'electricityLab.studentProgress';
-    const KEY_ATTEMPTS = 'electricityLab.attempts';
-    const KEY_TEACHER_PIN = 'electricityLab.teacherPIN';
-
-    const COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-    function readJSON(key){ try{ return JSON.parse(localStorage.getItem(key) || '{}'); }catch(e){ return {}; } }
-    function writeJSON(key, obj){ try{ localStorage.setItem(key, JSON.stringify(obj)); }catch(e){} }
-
-    // Teacher lock wrappers (use single lock store)
-    function getTeacherLocks(){ return getLocks(); }
-    function setTeacherLock(topic, unlocked){ try{ setLock(topic, !!unlocked); }catch(e){} }
-    function isTeacherLocked(topic){
-      try{
-        const key = (window.normalizeTopic ? window.normalizeTopic(topic) : (String(topic||'').toLowerCase().replace(/[^a-z]/g,'')));
-        const allowed = ['series','parallel','power_energy','charge','magnetism'];
-        if(allowed.indexOf(key) === -1) return false;
-        const l = window.getLocks ? window.getLocks() : (window.serverLocks || {});
-        return l[key] === false;
-      }catch(e){ return false; }
-    }
-
-    // Student progress format kept for dashboard only
-    function getStudentProgress(){ return readJSON(KEY_STUDENT_PROGRESS); }
-    function saveStudentProgress(obj){ writeJSON(KEY_STUDENT_PROGRESS, obj); }
-
-    // Attempts structure: { series: { remaining:3, lastAttempt:0 }, ... }
-    function getAttempts(){ return readJSON(KEY_ATTEMPTS); }
-    function saveAttempts(obj){ writeJSON(KEY_ATTEMPTS, obj); }
-    function resetAttemptsForTopic(topic){ const a = getAttempts(); a[topic] = { remaining:3, lastAttempt:0 }; saveAttempts(a); return a[topic]; }
-    function ensureAttemptsResetIfCooldown(topic){ const a = getAttempts(); const entry = a[topic]; if(!entry) return; if(entry.lastAttempt && (Date.now() - entry.lastAttempt) > COOLDOWN_MS){ a[topic] = { remaining:3, lastAttempt:0 }; saveAttempts(a); } }
-    function recordAttempt(topic){
-      if(!topic) return;
-      const progress = getStudentProgress(); if(progress[topic] && progress[topic].passed) return; // don't count after pass
-      const a = getAttempts(); if(!a[topic]) a[topic] = { remaining:3, lastAttempt:0 };
-      // cooldown reset
-      if(a[topic].lastAttempt && (Date.now() - a[topic].lastAttempt) > COOLDOWN_MS) a[topic].remaining = 3;
-      if(a[topic].remaining > 0) a[topic].remaining = Math.max(0, a[topic].remaining - 1);
-      a[topic].lastAttempt = Date.now(); saveAttempts(a);
-      // if attempts now 0, we do not change teacher locks, but rendering will show locked by attempts
-      return a[topic].remaining;
-    }
-    function hasAttemptsLeft(topic){
-      if(!topic) return true;
-      const progress = getStudentProgress(); if(progress[topic] && progress[topic].passed) return false;
-      const a = getAttempts(); const entry = a[topic];
-      if(!entry) return true;
-      if(entry.lastAttempt && (Date.now() - entry.lastAttempt) > COOLDOWN_MS){ // reset
-        a[topic] = { remaining:3, lastAttempt:0 }; saveAttempts(a); return true; }
-      return (entry.remaining || 0) > 0;
-    }
-
-    // expose helpers used elsewhere
-    window.getTeacherLocks = getTeacherLocks; window.setTeacherLock = setTeacherLock; window.isTeacherLocked = isTeacherLocked;
-    window.getStudentProgress = getStudentProgress; window.saveStudentProgress = saveStudentProgress;
-    // window.isUnlocked is defined earlier to use window.serverLocks only
-    window.getAttempts = getAttempts; window.recordAttempt = recordAttempt; window.hasAttemptsLeft = hasAttemptsLeft;
-
-    // (teacher helper functions defined earlier in this module)
-
-    function defaultState(){
-      // By default all topics locked (no automatic unlock on load)
-      const s = {};
-      topicsOrdered.forEach(t=> s[t] = false);
-      return s;
-    }
-
-    function loadState(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if(!raw) return defaultState();
-        const parsed = JSON.parse(raw);
-        // ensure all topics present
-        const d = defaultState();
-        topicsOrdered.forEach(t=>{ if(typeof parsed[t] === 'boolean') d[t] = parsed[t]; });
-        return d;
-      }catch(e){ return defaultState(); }
-    }
-
-    function saveState(state){
-      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ console.error(e); }
-    }
-
-    function getTopicElements(topic){
-      const els = [];
-      // nav buttons
-      const navBtn = document.querySelector(`.nav-menu .nav-btn[onclick="showSection('${topic}')"]`);
-      if(navBtn) els.push(navBtn);
-      // any other elements (home cards etc.) that call showSection(topic)
-      const others = Array.from(document.querySelectorAll(`[onclick="showSection('${topic}')"]`));
-      others.forEach(o=>{ if(!els.includes(o)) els.push(o); });
-      return els;
-    }
-
-    function applyUnlockState(){
-      const state = loadState();
-      topicsOrdered.forEach(topic=>{
-        const els = getTopicElements(topic);
-        // Resolve effective unlocked state (set by applyEffectiveLocks on load)
-        function canonicalKey(t){
-          if(!t) return t;
-          if(t === 'ohms-law') return 'ohms';
-          if(t === 'power') return 'power_energy';
-          if(t === 'electricCharge') return 'charge';
-          return t.replace(/-/g,'');
-        }
-        const canonical = canonicalKey(topic);
-        const effectiveMap = window.EFFECTIVE_UNLOCKS || null;
-        const unlocked = (effectiveMap ? !!effectiveMap[canonical] : (isUnlocked(topic) && !isTeacherLocked(topic)));
-        els.forEach(el=>{
-          if(el.tagName === 'BUTTON' || el.tagName === 'INPUT'){
-            el.disabled = !unlocked && (localStorage.getItem('role') !== 'teacher');
-            el.style.opacity = unlocked ? '1' : '0.4';
-            el.style.cursor = unlocked ? 'pointer' : 'not-allowed';
-            // update button text icons where present
-            try{
-              if(el.innerText && el.innerText.toLowerCase().includes(topic.replace(/-/g,' '))){
-                el.innerText = (unlocked ? '🔓 ' : '🔒 ') + el.innerText.replace(/^.\s*/,'');
-              }
-            }catch(e){}
-          } else {
-            // non-button clickable elements (cards)
-            el.style.pointerEvents = unlocked ? 'auto' : 'none';
-            el.style.opacity = unlocked ? '1' : '0.5';
-          }
-        });
-      });
-    }
-
-    // (removed lockAllTopics per student-only build)
-
-    // Unlock only the next topic after passing quiz for `currentTopic`
-    function unlockNext(currentTopic){
-      const idx = topicsOrdered.indexOf(currentTopic);
-      if(idx === -1) return;
-      const next = topicsOrdered[idx+1];
-      if(!next) return;
-      var canonical = null;
-      try{ canonical = (window.normalizeTopic ? window.normalizeTopic(next) : (function(t){ if(!t) return t; if(t === 'ohms-law') return 'ohms'; if(t === 'power') return 'power_energy'; if(t === 'electricCharge') return 'charge'; return t.replace(/-/g,''); })(next)); }catch(e){}
-      if(!canonical) return;
-      const locks = getLocks();
-      if(locks[canonical] === true) return; // already unlocked
-      setLock(canonical, true);
-      if(typeof applyUnlockState === 'function') try{ applyUnlockState(); }catch(e){}
-      try{ alert('✅ ' + next.replace(/-/g,' ') + ' unlocked.'); }catch(e){}
-    }
-
-    // Teacher UI and controls moved out to teacher.html (no teacher logic here)
-    // expose unlockNext for other code or testing
-    window.unlockNext = unlockNext;
-
-    // QUIZ_PASSED messages are handled by the central lock engine at the end of the page.
-
-    // initialization: defer lock resolution to applyEffectiveLocks() on window.load
-  })();
+  
   // ⚡ ELECTRIC CHARGE PAGE LINK
 function openCharge() {
   try{
@@ -3830,7 +3206,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const aKey = normAttemptKey(raw);
       if(!aKey) return;
       try{
-        const passedMap = getPassed ? getPassed() : JSON.parse(localStorage.getItem('EL_QUIZ_PASSED')||'{}');
+        const passedMap = getPassed ? getPassed() : {};
         if(!passedMap[aKey]) incrementAttempt(aKey);
         if(r.passed){ setPassed(aKey); }
       }catch(e){ /* swallow */ }
@@ -3879,39 +3255,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 </script>
-<script>
-function lockTopic(topic){
-  try{ setLock(topic, false); }catch(e){}
-  if(typeof applyUnlockState === 'function') try{ applyUnlockState(); }catch(e){}
-}
-
-function unlockTopic(topic){
-  try{ setLock(topic, true); }catch(e){}
-  if(typeof applyUnlockState === 'function') try{ applyUnlockState(); }catch(e){}
-}
-
-function applyEffectiveLocks(){
-  // Compute an in-memory map of effective unlocks using canonical keys.
-  // This must NOT write or change any stored unlocks — only drives UI.
-  const locks = getLocks();
-  const canonicalTopics = ['ohms','series','parallel','power_energy','charge','magnetism'];
-  const map = {};
-  function legacyForCanonical(c){ if(c==='ohms') return 'ohms-law'; if(c==='energy') return 'power'; if(c==='charge') return 'electricCharge'; return c; }
-  canonicalTopics.forEach(c=>{
-    const val = locks[c];
-    // unlocked only when explicitly true
-    map[c] = (val === true);
-  });
-  window.EFFECTIVE_UNLOCKS = map;
-  // Apply to UI immediately
-  try{ applyUnlockState(); }catch(e){}
-}
-
-// Run after all resources and otherDOMContentLoaded handlers to ensure final lock state
-window.addEventListener('load', () => {
-  try{ applyEffectiveLocks(); }catch(e){}
-});
-</script>
+ 
   <!-- legacy parallel lock script removed: lock managed centrally by unlockState -->
 
   
@@ -3960,88 +3304,7 @@ window.addEventListener('load', () => {
       window.addEventListener('hashchange', updateTeacherBtn);
     })();
   </script>
-<script>
-// FINAL OVERRIDE: safe unblock-only capture handler — DO NOT change window.location or filenames
-(function(){
-  function detectTopicFromElement(el){
-    try{
-      if(!el) return '';
-      if(el.getAttribute){
-        const dt = el.getAttribute('data-topic'); if(dt) return String(dt);
-        const id = el.getAttribute('id'); if(id) return String(id);
-        const href = el.getAttribute('href'); if(href) return String(href);
-      }
-      if(el.href) return String(el.href);
-      if(el.id) return String(el.id);
-      if(el.innerText) return String(el.innerText);
-      return '';
-    }catch(e){ return ''; }
-  }
-
-  function tokenToTopic(token){
-    if(!token) return '';
-    var s = String(token).toLowerCase();
-    if(s.indexOf('ohm') !== -1) return 'ohms';
-    if(s.indexOf('series') !== -1) return 'series';
-    if(s.indexOf('parallel') !== -1) return 'parallel';
-    if(s.indexOf('power') !== -1) return 'power_energy';
-    if(s.indexOf('energy') !== -1) return 'power_energy';
-    if(s.indexOf('charge') !== -1) return 'charge';
-    if(s.indexOf('electric') !== -1 && s.indexOf('charge') !== -1) return 'charge';
-    if(s.indexOf('magnet') !== -1) return 'magnetism';
-    if(s.indexOf('practical') !== -1) return 'practical';
-    if(s.indexOf('home') !== -1) return 'home';
-    return '';
-  }
-
-  var ALWAYS_UNLOCKED = ['home','ohms','practical'];
-
-  // capture-phase listener: unblock-only override — do not prevent default navigation or set locations
-  document.addEventListener('click', function(ev){
-    try{
-      var node = ev.target;
-      var el = node && node.closest && (node.closest('[data-topic]') || node.closest('a') || node.closest('[id]')) || node;
-      if(!el) el = node;
-      var token = detectTopicFromElement(el) || detectTopicFromElement(node) || '';
-      if(!token) return;
-      var topic = tokenToTopic(token);
-      if(!topic) return;
-
-      // Allow always-unlocked topics to proceed untouched
-      if(ALWAYS_UNLOCKED.indexOf(topic) !== -1) return;
-
-      // If the topic is locked (a lock-alert would have fired), stop other handlers
-      var locked = false;
-      try{
-        if(typeof window.isUnlocked === 'function'){
-          locked = !window.isUnlocked(topic);
-        } else {
-          const locks = window.serverLocks || {};
-          locked = !(locks[topic] === true);
-        }
-      }catch(e){}
-
-      if(locked){ try{ ev.stopImmediatePropagation(); }catch(e){} }
-    }catch(e){}
-  }, true);
-})();
-}
-</script>
- </script>
-
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-  const name = localStorage.getItem("studentName");
-  const section = localStorage.getItem("studentSection");
-
-  if (name && section) {
-    await fetchLocksFromServer(name, section);
-    if (typeof updateStudentLocks === "function") {
-      updateStudentLocks();
-    }
-  }
-});
-</script>
+ 
 
  </body>
 </html>
