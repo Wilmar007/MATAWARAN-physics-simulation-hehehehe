@@ -1100,9 +1100,9 @@
       if (passed) {
         // 🔓 Tell parent page that POWER quiz is passed
         window.parent.postMessage(
-          { type: "QUIZ_PASSED", topic: "energy" },
-          "*"
-        );
+  { type: "QUIZ_PASSED", topic: "power_energy" },
+  "*"
+);
 
         resultIcon.innerHTML = `
           <div class="celebrate">
