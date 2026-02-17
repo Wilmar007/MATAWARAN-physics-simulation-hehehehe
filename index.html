@@ -22,7 +22,6 @@ ALL SIMULATORS ARE IN /simulators FOLDER ONLY.
 
     html, body {
       width: 100%;
-      min-width: 360px;
       height: 100%;
       overflow-x: hidden;
     }
@@ -737,8 +736,11 @@ ALL SIMULATORS ARE IN /simulators FOLDER ONLY.
       }
       
       .nav-menu {
-        flex-direction: column;
-      }
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
       
       .content {
         padding: 1rem;
